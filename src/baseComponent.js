@@ -30,7 +30,7 @@
 		var buildEndpoint = function(brickId, resourceId, method, id, data, callbackObject){
 			var options = {
 				method: method,
-				url: '/api/' + brickId + '/' + Stamplay.VERSION + '/' + resourceId
+				url: '/api/' + brickId + '/' + root.Stamplay.VERSION + '/' + resourceId
 			}
 			if(id)
 				options.url= options.url+'/'+id
@@ -38,7 +38,7 @@
 				options.data = data
 			if(method == 'GET')
 				options.thisParams = data;
-			return Stamplay.makeAPromise(options, callbackObject);
+			return root.Stamplay.makeAPromise(options, callbackObject);
 		}
 
 		return {

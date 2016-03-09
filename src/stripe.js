@@ -15,9 +15,9 @@
 	*/
 	//constructor
 	var Stripe = {
-		url : '/api/stripe/' + Stamplay.VERSION + '/',
+		url : '/api/stripe/' + root.Stamplay.VERSION + '/',
 		createCustomer : function (userId, callbackObject) {
-			return Stamplay.makeAPromise({
+			return root.Stamplay.makeAPromise({
 				method: 'POST',
 				data: {'userId': userId},
 				url: this.url + 'customers'
@@ -25,7 +25,7 @@
 		},
 		createCreditCard : function (userId, token, callbackObject) {
 			if (arguments.length >= 2 && (_.isString(arguments[0]) && _.isString(arguments[1]))) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'POST',
 					data: {'token': token},
 					url: this.url + 'customers/' + userId + '/cards'
@@ -36,7 +36,7 @@
 		},
 		updateCreditCard : function (userId, token, callbackObject) {
 			if (arguments.length >= 2 && (_.isString(arguments[0]) && _.isString(arguments[1]))) {
-					return Stamplay.makeAPromise({
+					return root.Stamplay.makeAPromise({
 						method: 'PUT',
 						data: {'token': token},
 						url: this.url + 'customers/' + userId + '/cards'
@@ -47,7 +47,7 @@
 		},
 		charge : function (userId, token, amount, currency, callbackObject) {
 			if (arguments.length >= 4 && (_.isString(arguments[0]) && _.isString(arguments[1]) && _.isNumber(arguments[2]) && _.isString(arguments[3]) )){
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'POST',
 					data: {
 						'userId': userId,
@@ -63,7 +63,7 @@
 		},
 		createSubscription : function (userId, planId, callbackObject) {
 			if (arguments.length >= 2 && (_.isString(arguments[0]) && _.isString(arguments[1]))) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'POST',
 					data: {'planId': planId},
 					url: this.url + 'customers/' + userId + '/subscriptions'
@@ -74,7 +74,7 @@
 		},
 		getSubscriptions : function (userId, options, callbackObject) {
 			if (arguments.length >= 2) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'GET',
 					url: this.url + 'customers/' + userId + '/subscriptions',
 					thisParams: options
@@ -85,7 +85,7 @@
 		},
 		getSubscription : function (userId, subscriptionId, callbackObject) {
 			if (arguments.length >= 2 && (_.isString(arguments[0]) && _.isString(arguments[1]))) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'GET',
 					url: this.url + 'customers/' + userId + '/subscriptions/' + subscriptionId,
 				}, callbackObject);
@@ -94,14 +94,14 @@
 			}
 		},
 		getCreditCard : function (userId, callbackObject) {
-			return Stamplay.makeAPromise({
+			return root.Stamplay.makeAPromise({
 				method: 'GET',
 				url: this.url + 'customers/' + userId + '/cards',
 			}, callbackObject);
 		},
 		deleteSubscription : function (userId, subscriptionId, options, callbackObject) {
 			if (arguments.length >= 3) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'DELETE',
 					url: this.url + 'customers/' + userId + '/subscriptions/' + subscriptionId,
 					data: options
@@ -112,7 +112,7 @@
 		},
 		updateSubscription : function (userId, subscriptionId, options, callbackObject) {
 			if (arguments.length >= 3) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'PUT',
 					url: this.url + 'customers/' + userId + '/subscriptions/' + subscriptionId,
 					data: {
