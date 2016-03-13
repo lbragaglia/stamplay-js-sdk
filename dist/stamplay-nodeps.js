@@ -1,11 +1,12 @@
-/*! Stamplay v2.0.2 | (c) 2016 Stamplay *//**
+/*! Stamplay v2.0.3 | (c) 2016 Stamplay *//**
 @author Stamplay
 @version 2.0
 @description an awesome javascript sdk for Stamplay 
 */
 /* Initizialize library */
 (function (root) {
-	
+	'use strict';
+
 	/*  Inizialization of Stamplay Object */
 	root.Stamplay = root.Stamplay || {};
 	/* setting attribute API Version */
@@ -14,19 +15,22 @@
 	root.Stamplay.APPID = "";
 	/* baseUrl */
 	root.Stamplay.BASEURL = "";
+	/* options */
+	root.Stamplay.OPTIONS = {};
 	/*  check if exist local storage with the support of store.js */
 	if (window.localStorage && store.enabled) {
 		root.Stamplay.USESTORAGE = true;
 	}
 	if (getURLParameter('jwt')) {
-		if (Stamplay.USESTORAGE) {
+		if (root.Stamplay.USESTORAGE) {
 			store.set(window.location.origin + '-jwt', getURLParameter('jwt'));
 		}
 	}
-	/* init method for setup the base url */
-	root.Stamplay.init = function (appId) {
+	/* init method for setup the base url */ 
+	root.Stamplay.init = function (appId, options) {
 		root.Stamplay.BASEURL = 'https://' + appId + '.stamplayapp.com';
 		root.Stamplay.APPID = appId;
+		root.Stamplay.OPTIONS = options || {};
 	}
 
 	function getURLParameter(name) {
@@ -37,6 +41,7 @@
  * Very simple to use: Stamplay.makePromise({options})
  */
 (function (root) {
+	'use strict';
 
 	/* private function for handling this parameters */
 	var parseQueryParams = function (options) {
@@ -53,9 +58,9 @@
 		if (options.thisParams) {
 			parseQueryParams(options);
 		}		
+		var headerStamplay = root.Stamplay.APPID;
 		if (root.Stamplay.APPID != "") {
 			options.url = root.Stamplay.BASEURL + options.url;
-			headerStamplay = root.Stamplay.APPID;
 		} else {
 			headerStamplay = location.host;
 			headerStamplay = headerStamplay.replace(/^www\./, '');
@@ -89,7 +94,7 @@
 		req.setRequestHeader('Content-Type', 'application/json');
 		req.setRequestHeader('stamplay-app', headerStamplay);
 		// V1 
-		if (Stamplay.USESTORAGE) {
+		if (root.Stamplay.USESTORAGE) {
 			var jwt = store.get(window.location.origin + '-jwt');
 			if (jwt) {
 				if (_jwtIsValidTimestamp(jwt)) {
@@ -104,7 +109,7 @@
 		var jwt = req.getResponseHeader('x-stamplay-jwt');
 		if (jwt) {
 			var decodedJWT = _decodeJWT(jwt);
-			if (Stamplay.USESTORAGE) {
+			if (root.Stamplay.USESTORAGE) {
 				store.set(window.location.origin + '-jwt', jwt);
 			}
 		}
@@ -186,6 +191,7 @@
  *  It extends Model and Collection.
  */
 (function (root) {
+	'use strict';
 
 	function BaseComponent(brickId, resourceId) {
 		
@@ -211,7 +217,7 @@
 		var buildEndpoint = function(brickId, resourceId, method, id, data, callbackObject){
 			var options = {
 				method: method,
-				url: '/api/' + brickId + '/' + Stamplay.VERSION + '/' + resourceId
+				url: '/api/' + brickId + '/' + root.Stamplay.VERSION + '/' + resourceId
 			}
 			if(id)
 				options.url= options.url+'/'+id
@@ -219,7 +225,7 @@
 				options.data = data
 			if(method == 'GET')
 				options.thisParams = data;
-			return Stamplay.makeAPromise(options, callbackObject);
+			return root.Stamplay.makeAPromise(options, callbackObject);
 		}
 
 		return {
@@ -252,6 +258,7 @@
  * very easy to use : Stamplay.Support.redirect('http://stamplay.com')
  */
 (function (root) {
+	'use strict';
 
 	// constructor for Support Object
 	function Support() {
@@ -263,10 +270,10 @@
 
 		// function for check if you have user with a specific email 
 		this.validateEmail = function (email, callbackObject) {
-			return Stamplay.makeAPromise({
+			return root.Stamplay.makeAPromise({
 				method: 'POST',
 				data: { email: email },
-				url: '/api/auth/' + Stamplay.VERSION + '/validate/email'
+				url: '/api/auth/' + root.Stamplay.VERSION + '/validate/email'
 			}, callbackObject);
 		};
 	}
@@ -279,6 +286,8 @@
  * very easy to use : Stamplay.Query('user').equalTo('name':'john')
  */
 (function (root) {
+	'use strict';
+
 	// constructor for Query Object
 	// model is required ever
 	function _createGeoQuery(queryOperator, shapeOperator, type, coordinates, maxDistance, minDistance) {
@@ -315,13 +324,13 @@
 
 			or : function(){
 				var obj = { $or : []};
-				
+				var args = arguments;
 				if (arguments[0] instanceof Array) {
-					arguments = arguments[0];
+					args = arguments[0];
 				}
-				for(var i=0; i<arguments.length; i++){
-					if(arguments[i].whereQuery)	
-						obj.$or.push(arguments[i].whereQuery[0]);
+				for(var i=0; i<args.length; i++){
+					if(args[i].whereQuery)	
+						obj.$or.push(args[i].whereQuery[0]);
 					else
 						throw new Error('Please Or function take only Query object');
 				}
@@ -473,11 +482,11 @@
 					break
 				}
 
-				var Url = '/api/' + this.model + '/' + Stamplay.VERSION + '/' + this.instance 
+				var Url = '/api/' + this.model + '/' + root.Stamplay.VERSION + '/' + this.instance 
 								+'?where={'+this.executable+'}'+ this.paginationQuery + this.selectionQuery 
 								+ this.sortQuery + this.populateQuery + this.populateOwnerQuery
 
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'GET',
 					url:  Url,
 				},callback)
@@ -497,6 +506,8 @@
 */
 
 (function (root) {
+	'use strict';
+
 	/*
 		User component : Stamplay.User 
 		This class rappresent the User component on Stamplay platform
@@ -506,113 +517,125 @@
 		brickId:'user',
 		resourceId:'users',
 		currentUser : function (callbackObject){
-			return Stamplay.makeAPromise({
+			return root.Stamplay.makeAPromise({
 				method: 'GET',
-				url: '/api/' + this.brickId + '/' + Stamplay.VERSION + '/getStatus'
+				url: '/api/' + this.brickId + '/' + root.Stamplay.VERSION + '/getStatus'
 			}, callbackObject)
 		},
 		login :function (data, callbackObject) {
-			return Stamplay.makeAPromise({
+			return root.Stamplay.makeAPromise({
 				method: 'POST',
 				data: data,
-				url: '/auth/' + Stamplay.VERSION + '/local/login',
+				url: '/auth/' + root.Stamplay.VERSION + '/local/login',
 			}, callbackObject)
 		},
 		socialLogin: function(provider){
 			if(provider){
 				var jwt = store.get(window.location.origin + '-jwt');
 				if (jwt) {
-					// Store temporary cookie to permit user aggregation
+					// Store temporary cookie to permit user aggregation (multiple social identities)
 				  var date = new Date();
 	        date.setTime(date.getTime() + 5 * 60 * 1000);
 					document.cookie = 'stamplay.jwt='+jwt+'; expires=' + date.toGMTString() + '; path=/'
 				}
-				var url = '/auth/' + Stamplay.VERSION + '/' + provider + '/connect';
-				var port = (window.location.port) ? ':'+window.location.port : '';
-				root.Stamplay.Support.redirect(location.protocol + '//' + document.domain +port+ url);
+				var url = '/auth/' + root.Stamplay.VERSION + '/' + provider + '/connect';
+				var port = (window.location.port) ? ':'+window.location.port : '';	
+				var redirection = location.protocol + '//' + document.domain +port+ url
+				//if you are using sdk on your *personal site*
+				//remember to manage the callback url  for social login in editor
+				if(root.Stamplay.OPTIONS.absoluteUrl){
+					redirection = root.Stamplay.BASEURL+url
+				}
+				root.Stamplay.Support.redirect(redirection);
 			}else{
 				throw new Error('Stamplay.User.socialLogin needs the service name');
 			}
 		},
 		signup : function (data, callbackObject) {
-			return Stamplay.makeAPromise({
+			return root.Stamplay.makeAPromise({
 				method: 'POST',
 				data: data,
-				url: '/api/' + this.brickId + '/' + Stamplay.VERSION + '/' + this.resourceId
+				url: '/api/' + this.brickId + '/' + root.Stamplay.VERSION + '/' + this.resourceId
 			}, callbackObject)
 		},
 		logout : function (async, callbackObject) {
-			if (Stamplay.USESTORAGE)
+			if (root.Stamplay.USESTORAGE)
 				store.remove(window.location.origin + '-jwt');
 			if(async){
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 				method: 'GET',
-				url: '/auth/' + Stamplay.VERSION + '/logout'
+				url: '/auth/' + root.Stamplay.VERSION + '/logout'
 				}, callbackObject)
 			}else{
-				root.Stamplay.Support.redirect('/auth/' + Stamplay.VERSION + '/logout');
+				var url = '/auth/' + root.Stamplay.VERSION + '/logout';
+				var port = (window.location.port) ? ':'+window.location.port : '';	
+				var redirection = location.protocol + '//' + document.domain +port+ url
+				if(root.Stamplay.OPTIONS.absoluteUrl){
+					redirection = root.Stamplay.BASEURL+url
+				}
+				root.Stamplay.Support.redirect(redirection);
 			}
 		},
 		resetPassword: function(data, callbackObject){
-			return Stamplay.makeAPromise({
+			return root.Stamplay.makeAPromise({
 				method: 'POST',
 				data: data,
-				url: '/api/' + this.brickId + '/' + Stamplay.VERSION + '/users/resetpassword'
+				url: '/api/' + this.brickId + '/' + root.Stamplay.VERSION + '/users/resetpassword'
 			}, callbackObject)
 		},
 		activities : function (id, callbackObject) {
-			return Stamplay.makeAPromise({
+			return root.Stamplay.makeAPromise({
 				method: 'GET',
-				url: '/api/' + this.brickId + '/' + Stamplay.VERSION + '/users/'+id+'/activities'
+				url: '/api/' + this.brickId + '/' + root.Stamplay.VERSION + '/users/'+id+'/activities'
 			}, callbackObject)
 		},
 		following : function (id, callbackObject) {
-			return Stamplay.makeAPromise({
+			return root.Stamplay.makeAPromise({
 				method: 'GET',
-				url: '/api/' + this.brickId + '/' + Stamplay.VERSION + '/users/'+id+'/following'
+				url: '/api/' + this.brickId + '/' + root.Stamplay.VERSION + '/users/'+id+'/following'
 			}, callbackObject)
 		},
 		followedBy : function (id, callbackObject) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'GET',
-					url: '/api/' + this.brickId + '/' + Stamplay.VERSION + '/users/'+id+'/followed_by'
+					url: '/api/' + this.brickId + '/' + root.Stamplay.VERSION + '/users/'+id+'/followed_by'
 				}, callbackObject)
 		},
 		follow : function (id, callbackObject) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'PUT',
 					data: {'userId': id},
-					url: '/api/' + this.brickId + '/' + Stamplay.VERSION + '/users/follow'
+					url: '/api/' + this.brickId + '/' + root.Stamplay.VERSION + '/users/follow'
 				}, callbackObject)
 		},
 		unfollow : function (id, callbackObject) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'PUT',
 					data: {'userId': id},
-					url: '/api/' + this.brickId + '/' + Stamplay.VERSION + '/users/unfollow'
+					url: '/api/' + this.brickId + '/' + root.Stamplay.VERSION + '/users/unfollow'
 				}, callbackObject)
 		},
 		getRoles:function (callbackObject) {
-			return Stamplay.makeAPromise({
+			return root.Stamplay.makeAPromise({
 				method: 'GET',
-				url: '/api/user/' + Stamplay.VERSION + '/roles'
+				url: '/api/user/' + root.Stamplay.VERSION + '/roles'
 			}, callbackObject);
 		},
 		getRole:function (roleId, callbackObject) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'GET',
-					url: '/api/user/' + Stamplay.VERSION + '/roles/'+ roleId
+					url: '/api/user/' + root.Stamplay.VERSION + '/roles/'+ roleId
 				}, callbackObject);
 		}
 	}
 	_.extend(User, root.Stamplay.BaseComponent(User.brickId, User.resourceId))
 	delete User.patch
 	User.remove = function(id, callbackObject){
-		return Stamplay.makeAPromise({
+		return root.Stamplay.makeAPromise({
 			method: 'DELETE',
-			url: '/api/' + this.brickId + '/' + Stamplay.VERSION + '/' + this.resourceId + '/' + id
+			url: '/api/' + this.brickId + '/' + root.Stamplay.VERSION + '/' + this.resourceId + '/' + id
 		},callbackObject).then(function(resp){
-			if (Stamplay.USESTORAGE) {
+			if (root.Stamplay.USESTORAGE) {
 				var jwt = store.get(window.location.origin + '-jwt');
 				if (jwt) {
 					store.remove(window.location.origin + '-jwt');
@@ -636,6 +659,7 @@
 	PUT     '/api/cobject/VERSION/:cobjectId/:id/twitter_share 
 */
 (function (root) {
+	'use strict';
 
 	/**
 		Custom object component : Stamplay.Object 
@@ -643,12 +667,27 @@
 		It very easy to use: Stamplay.Object([Objectid])
 	*/
 	var makeActionPromise = function (id, action, data, callbackObject) {
-		return Stamplay.makeAPromise({
+		return root.Stamplay.makeAPromise({
 			method: 'PUT',
 			data: (data) ? data : {},
-			url: '/api/' + this.brickId + '/' + Stamplay.VERSION + '/' + this.resourceId + '/' + id + '/' + action
+			url: '/api/' + this.brickId + '/' + root.Stamplay.VERSION + '/' + this.resourceId + '/' + id + '/' + action
 		}, callbackObject)
 	};
+
+	var getId = function(resourceId, id){
+		return root.Stamplay.BaseComponent('cobject', resourceId+'/'+id).get()
+	};
+
+	var pushId = function(resourceId, id, newData, callbackObject){
+		return root.Stamplay.BaseComponent('cobject', resourceId).patch(id, newData, callbackObject)
+	};
+
+	var buildAttr = function(response, attribute, data){
+		var newData = {}
+		newData[attribute] = response[attribute]
+		newData[attribute].push(data)
+		return newData
+	}
 	//constructor
 	function Object(resourceId) {
 		if(resourceId){
@@ -657,14 +696,14 @@
 				resourceId:resourceId,				
 				findByCurrentUser : function (attr, callbackObject) {
 					if( (arguments.length==1 && _.isFunction(arguments[0])) || arguments.length==0){
-						return Stamplay.makeAPromise({
+						return root.Stamplay.makeAPromise({
 							method: 'GET',
-							url: '/api/' + this.brickId + '/' + Stamplay.VERSION + '/' + this.resourceId + '/find/owner'
+							url: '/api/' + this.brickId + '/' + root.Stamplay.VERSION + '/' + this.resourceId + '/find/owner'
 						},arguments[0])
 					}else{
-						return Stamplay.makeAPromise({
+						return root.Stamplay.makeAPromise({
 							method: 'GET',
-							url: '/api/' + this.brickId + '/' + Stamplay.VERSION + '/' + this.resourceId + '/find/'+attr
+							url: '/api/' + this.brickId + '/' + root.Stamplay.VERSION + '/' + this.resourceId + '/find/'+attr
 						},callbackObject)
 					}
 				},
@@ -679,6 +718,26 @@
 				},
 				comment: function (id, text, callbackObject) {
 					return makeActionPromise.call(this, id, 'comment', {text: text}, callbackObject);
+				},
+				push: function (id, attribute, data, callbackObject){
+					if(callbackObject){
+						return getId(resourceId, id)
+						.then(function(response){
+							var newData = buildAttr(response, attribute, data)
+							return pushId(resourceId, id, newData, callbackObject)
+						}, function(err){
+							callbackObject(err, null)
+						}).fail(function(err){
+							callbackObject(err, null)
+						})
+					}else{
+						return getId(resourceId, id)
+						.then(function(response){
+							var newData = buildAttr(response, attribute, data)
+							return pushId(resourceId, id, newData)
+						})
+					}
+
 				}
 			}, root.Stamplay.BaseComponent('cobject', resourceId))
 		}else{
@@ -691,6 +750,7 @@
  *  POST   '/api/webhook/VERSION/:webhookId/catch'
  */
 (function (root) {
+	'use strict';
 
 	/*
 		Webhook component : Stamplay.Webhook 
@@ -701,17 +761,17 @@
 	//constructor
 	function Webhook(resourceId) {
 		var resource = resourceId.replace(/[^\w\s]/gi, '').trim().toLowerCase().replace(/\s+/g, '_');
-		var url = '/api/webhook/' + Stamplay.VERSION + '/' + resource + '/catch';
+		var url = '/api/webhook/' + root.Stamplay.VERSION + '/' + resource + '/catch';
 		return {
 			post: function (data, callbackObject) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'POST',
 					data: data,
 					url: url
 				}, callbackObject);
 			},
 			// put: function (data, queryParams, callbackObject) {
-			// 	return Stamplay.makeAPromise({
+			// 	return root.Stamplay.makeAPromise({
 			// 		method: 'PUT',
 			// 		data: data,
 			// 		url: url,
@@ -719,7 +779,7 @@
 			// 	}, callbackObject);
 			// },
 			// get: function (queryParams, callbackObject) {
-			// 	return Stamplay.makeAPromise({
+			// 	return root.Stamplay.makeAPromise({
 			// 		method: 'GET',
 			// 		url: url,
 			// 		thisParams: queryParams
@@ -738,6 +798,7 @@
  * GET   'api/stripe/VERSION/customers/:userId/subscriptions'
  */
 (function (root) {
+	'use strict';
 
 	/*
 		Stripe component : Stamplay.Stripe 
@@ -746,9 +807,9 @@
 	*/
 	//constructor
 	var Stripe = {
-		url : '/api/stripe/' + Stamplay.VERSION + '/',
+		url : '/api/stripe/' + root.Stamplay.VERSION + '/',
 		createCustomer : function (userId, callbackObject) {
-			return Stamplay.makeAPromise({
+			return root.Stamplay.makeAPromise({
 				method: 'POST',
 				data: {'userId': userId},
 				url: this.url + 'customers'
@@ -756,7 +817,7 @@
 		},
 		createCreditCard : function (userId, token, callbackObject) {
 			if (arguments.length >= 2 && (_.isString(arguments[0]) && _.isString(arguments[1]))) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'POST',
 					data: {'token': token},
 					url: this.url + 'customers/' + userId + '/cards'
@@ -767,7 +828,7 @@
 		},
 		updateCreditCard : function (userId, token, callbackObject) {
 			if (arguments.length >= 2 && (_.isString(arguments[0]) && _.isString(arguments[1]))) {
-					return Stamplay.makeAPromise({
+					return root.Stamplay.makeAPromise({
 						method: 'PUT',
 						data: {'token': token},
 						url: this.url + 'customers/' + userId + '/cards'
@@ -778,7 +839,7 @@
 		},
 		charge : function (userId, token, amount, currency, callbackObject) {
 			if (arguments.length >= 4 && (_.isString(arguments[0]) && _.isString(arguments[1]) && _.isNumber(arguments[2]) && _.isString(arguments[3]) )){
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'POST',
 					data: {
 						'userId': userId,
@@ -794,7 +855,7 @@
 		},
 		createSubscription : function (userId, planId, callbackObject) {
 			if (arguments.length >= 2 && (_.isString(arguments[0]) && _.isString(arguments[1]))) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'POST',
 					data: {'planId': planId},
 					url: this.url + 'customers/' + userId + '/subscriptions'
@@ -805,7 +866,7 @@
 		},
 		getSubscriptions : function (userId, options, callbackObject) {
 			if (arguments.length >= 2) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'GET',
 					url: this.url + 'customers/' + userId + '/subscriptions',
 					thisParams: options
@@ -816,7 +877,7 @@
 		},
 		getSubscription : function (userId, subscriptionId, callbackObject) {
 			if (arguments.length >= 2 && (_.isString(arguments[0]) && _.isString(arguments[1]))) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'GET',
 					url: this.url + 'customers/' + userId + '/subscriptions/' + subscriptionId,
 				}, callbackObject);
@@ -825,14 +886,14 @@
 			}
 		},
 		getCreditCard : function (userId, callbackObject) {
-			return Stamplay.makeAPromise({
+			return root.Stamplay.makeAPromise({
 				method: 'GET',
 				url: this.url + 'customers/' + userId + '/cards',
 			}, callbackObject);
 		},
 		deleteSubscription : function (userId, subscriptionId, options, callbackObject) {
 			if (arguments.length >= 3) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'DELETE',
 					url: this.url + 'customers/' + userId + '/subscriptions/' + subscriptionId,
 					data: options
@@ -843,7 +904,7 @@
 		},
 		updateSubscription : function (userId, subscriptionId, options, callbackObject) {
 			if (arguments.length >= 3) {
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: 'PUT',
 					url: this.url + 'customers/' + userId + '/subscriptions/' + subscriptionId,
 					data: {
@@ -860,6 +921,8 @@
  *  POST   '/api/codeblock/VERSION/:CodeblockId/run'
  */
 (function (root) {
+	'use strict';
+
 	/*
 		Codeblock component : Stamplay.Codeblock 
 		This class rappresent the Codeblock Object component on Stamplay platform
@@ -900,7 +963,7 @@
 	//constructor
 	function Codeblock(resourceId) {
 		var resource = resourceId.replace(/[^\w\s]/gi, '').trim().toLowerCase().replace(/\s+/g, '_');
-		var url = '/api/codeblock/' + Stamplay.VERSION + '/run/' + resource;
+		var url = '/api/codeblock/' + root.Stamplay.VERSION + '/run/' + resource;
 		return {
 			run :function (data, queryParams, callbackObject) {
 				/*
@@ -912,7 +975,7 @@
 				var finalMethod = _parseMethod('POST');
 				var finalData = _parseData('POST', data);
 				var finalQuery = queryParams;
-				return Stamplay.makeAPromise({
+				return root.Stamplay.makeAPromise({
 					method: finalMethod,
 					data: finalData,
 					url: url,
